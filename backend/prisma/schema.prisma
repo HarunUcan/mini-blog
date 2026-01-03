@@ -25,6 +25,7 @@ model User {
 
   posts         Post[]
   refreshTokens RefreshToken[]
+  medias        Media[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -37,9 +38,14 @@ model Post {
 
   title       String
   slug        String     @unique
-  content     String
+  content     Json
   status      PostStatus @default(DRAFT)
   publishedAt DateTime?
+
+  coverMediaId String? @unique
+  coverMedia   Media?  @relation("PostCover", fields: [coverMediaId], references: [id], onDelete: SetNull)
+
+  medias       Media[] @relation("PostMedia")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -62,4 +68,26 @@ model RefreshToken {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model Media {
+  id         String   @id @default(uuid())
+  ownerId    String?
+  owner      User?    @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  postId String?
+  post   Post? @relation("PostMedia", fields: [postId], references: [id], onDelete: Cascade)
+
+  usedAsCoverIn Post? @relation("PostCover")
+
+  path      String
+  mimeType  String
+  sizeBytes Int?
+  width     Int?
+  height    Int?
+
+  createdAt  DateTime  @default(now())
+
+  @@index([postId])
+  @@index([ownerId])
 }
