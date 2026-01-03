@@ -16,6 +16,13 @@ export class PostsController {
         return this.postsService.create(userId, dto);
     }
 
+    // POST /posts/publish/:id
+    @UseGuards(JwtAuthGuard)
+    @Post('publish/:id')
+    publish(@Param('id') id: string, @User('id') userId: string) {
+        return this.postsService.publish(id, userId);
+    }
+
     // PATCH /posts/:id
     @UseGuards(JwtAuthGuard)
     @Patch(':id')
@@ -38,10 +45,10 @@ export class PostsController {
     }
 
     // Public detail
-    // GET /posts/:id
-    @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.postsService.findOnePublic(id);
+    // GET /posts/:slug
+    @Get(':slug')
+    findOne(@Param('slug') slug: string) {
+        return this.postsService.findOnePublic(slug);
     }
 
     // My posts
