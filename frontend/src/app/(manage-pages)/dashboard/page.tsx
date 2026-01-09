@@ -2,6 +2,7 @@
 
 import ArticleTable from "@/components/ArticleTable";
 import AuthGuard from "@/components/AuthGuard";
+import Link from "next/link";
 import { PiNotePencil } from "react-icons/pi";
 
 
@@ -19,10 +20,12 @@ export default function Dashboard() {
                     <button
                         className="font-semibold rounded-lg px-6 border-1 border-black dark:border-gray-200 text-gray-900 dark:text-gray-100 cursor-pointer 2xl:w-70 h-12 2xl:h-16 shadow-md"
                     >
-                        <span className="flex justify-center 2xl:text-2xl items-center gap-1">
-                            <PiNotePencil className="text-2xl" />
-                            <span>Write New Story</span>
-                        </span>
+                        <Link href="/write">
+                            <span className="flex justify-center 2xl:text-2xl items-center gap-1">
+                                <PiNotePencil className="text-2xl" />
+                                <span>Write New Story</span>
+                            </span>
+                        </Link>
                     </button>
                 </div>
 

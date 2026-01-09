@@ -161,7 +161,7 @@ export default function WritePage() {
             }
 
             setPublishSuccess("Published successfully.");
-            router.push(`/dashboard`);
+            router.replace(`/dashboard`);
         } catch (err) {
             setPublishError(err instanceof Error ? err.message : "Publish failed");
         } finally {

@@ -1,9 +1,37 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { MdLogout, MdMenu, MdClose } from "react-icons/md"; // Menu ikonları eklendi
 import { MdOutlineMenuBook } from "react-icons/md";
 import { IoPersonSharp } from "react-icons/io5";
+import { getAuthUser, logout, type AuthUser } from "@/lib/auth";
 
 export default function PanelHeader() {
+    const [user, setUser] = useState<AuthUser | null>(null);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const router = useRouter();
+
+    useEffect(() => {
+        setUser(getAuthUser());
+    }, []);
+
+    const displayName = user?.displayName ?? user?.email ?? "Kullanıcı";
+    const roleLabel = user?.role ? (user.role === "ADMIN" ? "Admin" : "Editör") : "Editör";
+
+    const handleLogout = async () => {
+        if (isLoggingOut) return;
+        setIsLoggingOut(true);
+
+        try {
+            await logout();
+        } finally {
+            setUser(null);
+            router.replace("/login");
+        }
+    };
+
     return (
         <header className="bg-white dark:bg-white/10 2xl:py-8 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50 transition-colors duration-300">
             {/* max-w-screen-xl: İçeriği 1280px genişliğe sabitler (Büyük ekranlarda dağılmayı önler)
@@ -33,8 +61,8 @@ export default function PanelHeader() {
 
                         {/* Kullanıcı Bilgisi (Telefonda yazıyı gizle 'hidden sm:flex') */}
                         <div className='flex flex-col items-end hidden sm:flex flex-col'>
-                            <span className='text-xs 2xl:text-2xl font-bold text-gray-700 dark:text-white leading-tight'>Harun Uçan</span>
-                            <span className='text-[11px] 2xl:text-lg text-gray-500 dark:text-gray-400 leading-tight'>Editör</span>
+                            <span className='text-xs 2xl:text-2xl font-bold text-gray-700 dark:text-white leading-tight'>{displayName}</span>
+                            <span className='text-[11px] 2xl:text-lg text-gray-500 dark:text-gray-400 leading-tight'>{roleLabel}</span>
                         </div>
                         <div className='flex items-center gap-2 2xl:mr-16'>
                             <div className='flex justify-center items-center overflow-hidden w-8 2xl:w-12 h-8 2xl:h-12 rounded-full border-2 font-semibold border-gray-800 dark:border-gray-100 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm 2xl:text-2xl'>
@@ -44,7 +72,13 @@ export default function PanelHeader() {
 
                         {/* Aksiyon Butonları */}
 
-                        <button className='p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 transition group cursor-pointer'>
+                        <button
+                            type="button"
+                            onClick={handleLogout}
+                            disabled={isLoggingOut}
+                            aria-label="Logout"
+                            className="p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 transition group cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
                             <MdLogout className="text-xl 2xl:text-3xl text-gray-600 dark:text-gray-400 group-hover:text-red-600 dark:group-hover:text-red-400 transition duration-200" />
                         </button>
 

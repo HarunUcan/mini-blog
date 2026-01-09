@@ -12,7 +12,7 @@ type ApiError = {
     };
 };
 
-type AuthUser = {
+export type AuthUser = {
     id: string;
     email: string;
     displayName: string;
@@ -29,6 +29,7 @@ type RegisterResponse = {
 };
 
 const ACCESS_TOKEN_KEY = "access_token";
+const AUTH_USER_KEY = "auth_user";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 function isBrowser() {
@@ -72,6 +73,18 @@ export function getAccessToken() {
     }
 }
 
+export function getAuthUser() {
+    if (!isBrowser()) return null;
+
+    try {
+        const raw = window.localStorage.getItem(AUTH_USER_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw) as AuthUser;
+    } catch {
+        return null;
+    }
+}
+
 export function setAccessToken(token: string | null) {
     if (!isBrowser()) return;
 
@@ -80,6 +93,20 @@ export function setAccessToken(token: string | null) {
             window.localStorage.setItem(ACCESS_TOKEN_KEY, token);
         } else {
             window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+        }
+    } catch {
+        // Ignore storage errors (private mode, blocked, etc.)
+    }
+}
+
+export function setAuthUser(user: AuthUser | null) {
+    if (!isBrowser()) return;
+
+    try {
+        if (user) {
+            window.localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+        } else {
+            window.localStorage.removeItem(AUTH_USER_KEY);
         }
     } catch {
         // Ignore storage errors (private mode, blocked, etc.)
@@ -122,6 +149,7 @@ export async function refreshAccessToken() {
 
         if (!res.ok) {
             setAccessToken(null);
+            setAuthUser(null);
             return false;
         }
 
@@ -129,11 +157,13 @@ export async function refreshAccessToken() {
 
         if (!payload || !("success" in payload) || !payload.success) {
             setAccessToken(null);
+            setAuthUser(null);
             return false;
         }
 
         if (!payload.data?.accessToken) {
             setAccessToken(null);
+            setAuthUser(null);
             return false;
         }
 
@@ -141,6 +171,7 @@ export async function refreshAccessToken() {
         return true;
     } catch {
         setAccessToken(null);
+        setAuthUser(null);
         return false;
     }
 }
@@ -167,6 +198,7 @@ export async function login(credentials: { email: string; password: string }) {
     }
 
     setAccessToken(payload.data.accessToken);
+    setAuthUser(payload.data.user);
     return payload.data;
 }
 
@@ -197,6 +229,7 @@ export async function logout() {
         // Ignore logout errors
     } finally {
         setAccessToken(null);
+        setAuthUser(null);
     }
 }
 
