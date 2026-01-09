@@ -112,6 +112,11 @@ export class PostsService {
                 title: true,
                 content: true,
                 authorId: true,
+                author: {
+                    select: {
+                        displayName: true,
+                    },
+                },
                 createdAt: true,
                 updatedAt: true,
                 publishedAt: true,

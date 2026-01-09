@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 interface PostProps {
     title: string;
     excerpt: string;
@@ -6,13 +8,14 @@ interface PostProps {
     category: string;
     readTime: string;
     imageUrl: string;
+    href?: string;
     authorImageUrl?: string; // Opsiyonel
 }
 
-export default function PostCard({ title, excerpt, author, date, category, readTime, imageUrl, authorImageUrl }: PostProps) {
-    return (
-        <>
-            <article className="group flex cursor-pointer flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+export default function PostCard({ title, excerpt, author, date, category, readTime, imageUrl, authorImageUrl, href }: PostProps) {
+    const articleClassName = `group flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between${href ? " cursor-pointer" : ""}`;
+    const article = (
+        <article className={articleClassName}>
                 <div className="flex flex-1 flex-col gap-3 pr-8">
                     <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-text-secondary dark:text-gray-500">
                         <div className="flex items-center gap-2">
@@ -52,7 +55,18 @@ export default function PostCard({ title, excerpt, author, date, category, readT
                         style={{ backgroundImage: `url("${imageUrl}")` }}
                     ></div>
                 </div>
-            </article>
+        </article>
+    );
+
+    return (
+        <>
+            {href ? (
+                <Link href={href} className="block">
+                    {article}
+                </Link>
+            ) : (
+                article
+            )}
             <hr className="border-gray-100 dark:border-gray-800" />
         </>
     );

@@ -2,34 +2,100 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PostCard from "@/components/PostCard";
 
-// Geçici veri (NestJS'den gelecek verinin simülasyonu)
-const POSTS = [
-  {
-    id: 1,
-    title: "The Future of Minimalist Design",
-    excerpt: "Minimalism isn't just about using less; it's about making room for more of what matters. In digital design, this means stripping away the non-essential...",
-    author: "Alex Doe",
-    date: "Oct 24, 2023",
-    category: "Design",
-    readTime: "4 min read",
-    imageUrl: "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&q=80&w=300&h=200", // Örnek resim
-    authorImageUrl: "https://i.pravatar.cc/150?u=alex"
-  },
-  {
-    id: 2,
-    title: "Why Typography Matters More Than You Think",
-    excerpt: "Good typography makes us read more efficiently. It guides the eye and sets the tone of the voice before a single word is comprehended.",
-    author: "Sarah Smith",
-    date: "Oct 22, 2023",
-    category: "Typography",
-    readTime: "6 min read",
-    imageUrl: "https://images.unsplash.com/photo-1555445054-a1d45f413014?auto=format&fit=crop&q=80&w=300&h=200",
-    authorImageUrl: "https://i.pravatar.cc/150?u=sarah"
-  }
-  // Diğer postlar buraya eklenebilir...
-];
+type PublicPost = {
+  id: string;
+  title: string;
+  content: unknown;
+  createdAt: string;
+  publishedAt: string | null;
+  slug: string | null;
+  author?: {
+    displayName?: string | null;
+  };
+};
 
-export default function Home() {
+type ApiSuccess<T> = {
+  success: true;
+  data: T;
+};
+
+type ApiError = {
+  success: false;
+  error: {
+    message: string;
+  };
+};
+
+function getApiUrl(path: string) {
+  const base = process.env.NEXT_PUBLIC_API_URL;
+  if (!base) {
+    throw new Error("NEXT_PUBLIC_API_URL is not set");
+  }
+
+  const normalizedBase = base.endsWith("/") ? base.slice(0, -1) : base;
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${normalizedBase}${normalizedPath}`;
+}
+
+function stripHtml(html: string) {
+  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function getReadTime(html: string) {
+  const text = stripHtml(html);
+  if (!text) return 1;
+  const words = text.split(" ").length;
+  return Math.max(1, Math.ceil(words / 200));
+}
+
+function getExcerpt(html: string, maxLength = 180) {
+  const text = stripHtml(html);
+  if (!text) return "No preview available.";
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength).trimEnd()}...`;
+}
+
+function extractFirstImage(html: string) {
+  const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  return match?.[1] ?? "";
+}
+
+function formatDate(value: string | null) {
+  if (!value) return "Draft";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Draft";
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+  });
+}
+
+async function fetchPosts() {
+  try {
+    const res = await fetch(getApiUrl("/posts"), {
+      cache: "no-store",
+    });
+
+    const payload = (await res.json().catch(() => null)) as
+      | ApiSuccess<PublicPost[]>
+      | ApiError
+      | null;
+
+    if (!res.ok || !payload || payload.success === false) {
+      return [];
+    }
+
+    return payload.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export default async function Home() {
+  const posts = await fetchPosts();
+  const hasPosts = posts.length > 0;
+
   return (
     <>
       <Header />
@@ -59,22 +125,46 @@ export default function Home() {
             </div>
 
             {/* Article List */}
-            <div className="flex flex-col gap-16">
-              {POSTS.map((post) => (
-                <PostCard
-                  key={post.id}
-                  {...post}
-                />
-              ))}
-            </div>
+            {hasPosts ? (
+              <div className="flex flex-col gap-16">
+                {posts.map((post) => {
+                  const contentHtml = typeof post.content === "string" ? post.content : "";
+                  const excerpt = getExcerpt(contentHtml);
+                  const readTime = `${getReadTime(contentHtml)} min read`;
+                  const date = formatDate(post.publishedAt ?? post.createdAt);
+                  const imageUrl = extractFirstImage(contentHtml);
+                  const author = post.author?.displayName ?? "MiniBlog";
+
+                  return (
+                    <PostCard
+                      key={post.id}
+                      title={post.title?.trim() || "Untitled"}
+                      excerpt={excerpt}
+                      author={author}
+                      date={date}
+                      category="Story"
+                      readTime={readTime}
+                      imageUrl={imageUrl}
+                      href={post.slug ? `/posts/${post.slug}` : undefined}
+                    />
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-gray-200 bg-white/70 px-6 py-8 text-center text-sm text-text-secondary shadow-sm dark:border-gray-800 dark:bg-white/5 dark:text-gray-400">
+                No stories published yet.
+              </div>
+            )}
           </div>
 
           {/* Pagination */}
-          <div className="flex justify-center py-10">
-            <button className="rounded-full border border-gray-200 bg-transparent px-6 py-3 text-sm font-medium text-primary transition-colors hover:border-primary hover:bg-gray-50 dark:border-gray-700 dark:text-white dark:hover:border-white dark:hover:bg-gray-800">
-              Load more stories
-            </button>
-          </div>
+          {hasPosts && (
+            <div className="flex justify-center py-10">
+              <button className="rounded-full border border-gray-200 bg-transparent px-6 py-3 text-sm font-medium text-primary transition-colors hover:border-primary hover:bg-gray-50 dark:border-gray-700 dark:text-white dark:hover:border-white dark:hover:bg-gray-800">
+                Load more stories
+              </button>
+            </div>
+          )}
         </div>
       </main>
 
