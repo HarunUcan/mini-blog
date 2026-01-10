@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LuPencil, LuTrash2, LuFileText } from "react-icons/lu";
+import { LuPencil, LuTrash2 } from "react-icons/lu";
 import { apiFetch } from "@/lib/auth";
+import { useRouter } from "next/navigation";
 
 type PostStatus = "DRAFT" | "PUBLISHED";
 
@@ -37,6 +38,7 @@ function formatDate(value?: string | null) {
 }
 
 export default function ArticleTable() {
+    const router = useRouter();
     const [posts, setPosts] = useState<Post[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -77,6 +79,30 @@ export default function ArticleTable() {
             active = false;
         };
     }, []);
+
+    const handleDelete = async (post: Post, title: string) => {
+        const confirmed = window.confirm(
+            title ? `Delete "${title}"?` : "Delete this post?",
+        );
+
+        if (!confirmed) return;
+
+        try {
+            const res = await apiFetch(`/posts/${post.id}`, {
+                method: "DELETE",
+            });
+            const text = await res.text();
+            const payload = text ? (JSON.parse(text) as ApiSuccess<{ deleted: boolean }> | ApiError) : null;
+
+            if (!res.ok || !payload || payload.success === false) {
+                throw new Error(payload?.error?.message ?? "Post could not be deleted");
+            }
+
+            setPosts((prev) => prev.filter((item) => item.id !== post.id));
+        } catch (err) {
+            window.alert(err instanceof Error ? err.message : "Post could not be deleted");
+        }
+    };
 
     return (
         <>
@@ -140,11 +166,17 @@ export default function ArticleTable() {
                                     {/* ACTIONS */}
                                     <td className="px-6 py-4 2xl:py-6">
                                         <div className="flex justify-end text-gray-400 dark:text-gray-500 gap-1 2xl:gap-2">
-                                            <button className="w-8 h-8 2xl:w-12 2xl:h-12 flex items-center justify-center rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
+                                            <button
+                                                onClick={() => router.push(`/write/${item.id}`)}
+                                                className="w-8 h-8 2xl:w-12 2xl:h-12 flex items-center justify-center rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
+                                            >
                                                 <LuPencil className="w-[18px] h-[18px] 2xl:w-6 2xl:h-6" />
                                             </button>
 
-                                            <button className="w-8 h-8 2xl:w-12 2xl:h-12 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer">
+                                            <button
+                                                onClick={() => handleDelete(item, title)}
+                                                className="w-8 h-8 2xl:w-12 2xl:h-12 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer"
+                                            >
                                                 <LuTrash2 className="w-[18px] h-[18px] 2xl:w-6 2xl:h-6" />
                                             </button>
                                         </div>

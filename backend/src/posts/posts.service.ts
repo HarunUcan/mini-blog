@@ -148,6 +148,25 @@ export class PostsService {
         });
     }
 
+    async findMyPost(authorId: string, postId: string) {
+        const post = await this.prisma.post.findUnique({
+            where: { id: postId },
+        });
+        if (!post) {
+            throw new NotFoundException({
+                code: 'POST_NOT_FOUND',
+                message: 'Post bulunamadı',
+            });
+        }
+        if (post.authorId !== authorId) {
+            throw new ForbiddenException({
+                code: 'POST_NOT_OWNED',
+                message: 'Bu post size ait değil',
+            });
+        }
+        return post;
+    }
+
 
 
     // --- helpers ---

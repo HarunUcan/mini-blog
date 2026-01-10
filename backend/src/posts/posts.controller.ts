@@ -58,4 +58,12 @@ export class PostsController {
     myPosts(@User('id') userId: string) {
         return this.postsService.findMyPosts(userId);
     }
+
+    // My post detail
+    // GET /posts/me/:id
+    @UseGuards(JwtAuthGuard)
+    @Get('me/:id')
+    myPost(@User('id') userId: string, @Param('id') id: string) {
+        return this.postsService.findMyPost(userId, id);
+    }
 }
