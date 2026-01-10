@@ -60,7 +60,7 @@ async function readJson<T>(res: Response): Promise<T | null> {
 }
 
 function getErrorMessage(payload: ApiError | null, fallback: string) {
-    return payload?.error?.message ?? fallback;
+    return payload ? payload.error.message : fallback;
 }
 
 export function getAccessToken() {

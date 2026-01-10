@@ -27,9 +27,9 @@ type ApiError = {
 };
 
 function getApiUrl(path: string) {
-  const base = process.env.NEXT_PUBLIC_API_URL;
+  const base = process.env.API_URL_INTERNAL ?? process.env.NEXT_PUBLIC_API_URL;
   if (!base) {
-    throw new Error("NEXT_PUBLIC_API_URL is not set");
+    throw new Error("API_URL_INTERNAL or NEXT_PUBLIC_API_URL is not set");
   }
 
   const normalizedBase = base.endsWith("/") ? base.slice(0, -1) : base;

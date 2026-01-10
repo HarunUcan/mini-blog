@@ -35,9 +35,9 @@ function getReadTime(html: string) {
 }
 
 async function fetchPost(slug: string) {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = process.env.API_URL_INTERNAL ?? process.env.NEXT_PUBLIC_API_URL;
     if (!apiUrl) {
-        throw new Error("NEXT_PUBLIC_API_URL is not set");
+        throw new Error("API_URL_INTERNAL or NEXT_PUBLIC_API_URL is not set");
     }
 
     const res = await fetch(`${apiUrl}/posts/${slug}`, {

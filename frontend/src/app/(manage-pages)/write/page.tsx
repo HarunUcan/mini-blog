@@ -36,6 +36,14 @@ type ApiError = {
     };
 };
 
+function getApiErrorMessage<T>(payload: ApiSuccess<T> | ApiError | null, fallback: string) {
+    if (!payload) return fallback;
+    if ("success" in payload && payload.success === false) {
+        return payload.error.message;
+    }
+    return fallback;
+}
+
 export default function WritePage() {
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
@@ -66,7 +74,7 @@ export default function WritePage() {
         const payload = text ? (JSON.parse(text) as ApiSuccess<DraftPost> | ApiError) : null;
 
         if (!res.ok || !payload || payload.success === false) {
-            throw new Error(payload?.error?.message ?? "Draft could not be created");
+            throw new Error(getApiErrorMessage(payload, "Draft could not be created"));
         }
 
         const id = payload.data?.id;
@@ -146,7 +154,7 @@ export default function WritePage() {
             const updatePayload = updateText ? (JSON.parse(updateText) as ApiSuccess<unknown> | ApiError) : null;
 
             if (!updateRes.ok || !updatePayload || updatePayload.success === false) {
-                throw new Error(updatePayload?.error?.message ?? "Post could not be saved");
+                throw new Error(getApiErrorMessage(updatePayload, "Post could not be saved"));
             }
 
             const publishRes = await apiFetch(`/posts/publish/${draftId}`, {
@@ -157,7 +165,7 @@ export default function WritePage() {
             const publishPayload = publishText ? (JSON.parse(publishText) as ApiSuccess<unknown> | ApiError) : null;
 
             if (!publishRes.ok || !publishPayload || publishPayload.success === false) {
-                throw new Error(publishPayload?.error?.message ?? "Post could not be published");
+                throw new Error(getApiErrorMessage(publishPayload, "Post could not be published"));
             }
 
             setPublishSuccess("Published successfully.");
@@ -284,6 +292,5 @@ export default function WritePage() {
         </AuthGuard>
     );
 }
-
 
 

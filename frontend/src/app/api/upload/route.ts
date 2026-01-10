@@ -28,8 +28,16 @@ export async function POST(req: Request) {
         fd.append("postId", postId);
     }
 
+    const apiUrl = process.env.API_URL_INTERNAL ?? process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+        return NextResponse.json(
+            { message: "API_URL_INTERNAL or NEXT_PUBLIC_API_URL is not set" },
+            { status: 500 }
+        );
+    }
+
     const backendRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/media/upload`,
+        `${apiUrl}/media/upload`,
         {
             method: "POST",
             headers: {

@@ -19,6 +19,14 @@ type ApiError = {
     };
 };
 
+function getApiErrorMessage<T>(payload: ApiSuccess<T> | ApiError | null, fallback: string) {
+    if (!payload) return fallback;
+    if ("success" in payload && payload.success === false) {
+        return payload.error.message;
+    }
+    return fallback;
+}
+
 type PostStatus = "DRAFT" | "PUBLISHED";
 
 type PostDetail = {
@@ -60,8 +68,9 @@ export default function EditPostPage() {
                 const payload = text ? (JSON.parse(text) as ApiSuccess<PostDetail> | ApiError) : null;
 
                 if (!res.ok || !payload || payload.success === false) {
-                    throw new Error(payload?.error?.message ?? "Post could not be loaded");
+                    throw new Error(getApiErrorMessage(payload, "Post could not be loaded"));
                 }
+
                 const post = payload.data;
 
                 if (active) {
@@ -120,7 +129,7 @@ export default function EditPostPage() {
             const payload = text ? (JSON.parse(text) as ApiSuccess<unknown> | ApiError) : null;
 
             if (!res.ok || !payload || payload.success === false) {
-                throw new Error(payload?.error?.message ?? "Post could not be updated");
+                throw new Error(getApiErrorMessage(payload, "Post could not be updated"));
             }
 
             setSaveSuccess("Updated successfully.");

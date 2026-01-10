@@ -28,6 +28,14 @@ type ApiError = {
     };
 };
 
+function getApiErrorMessage<T>(payload: ApiSuccess<T> | ApiError | null, fallback: string) {
+    if (!payload) return fallback;
+    if ("success" in payload && payload.success === false) {
+        return payload.error.message;
+    }
+    return fallback;
+}
+
 function formatDate(value?: string | null) {
     if (!value) return "-";
 
@@ -56,7 +64,7 @@ export default function ArticleTable() {
                 const payload = text ? (JSON.parse(text) as ApiSuccess<Post[]> | ApiError) : null;
 
                 if (!res.ok || !payload || payload.success === false) {
-                    throw new Error(payload?.error?.message ?? "Posts could not be loaded");
+                    throw new Error(getApiErrorMessage(payload, "Posts could not be loaded"));
                 }
 
                 if (active) {
@@ -95,7 +103,7 @@ export default function ArticleTable() {
             const payload = text ? (JSON.parse(text) as ApiSuccess<{ deleted: boolean }> | ApiError) : null;
 
             if (!res.ok || !payload || payload.success === false) {
-                throw new Error(payload?.error?.message ?? "Post could not be deleted");
+                throw new Error(getApiErrorMessage(payload, "Post could not be deleted"));
             }
 
             setPosts((prev) => prev.filter((item) => item.id !== post.id));
